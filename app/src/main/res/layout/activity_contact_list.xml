@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.example.shreyaprabhu.contactsapp.Activity.MainActivity">
+
+    <include
+        android:id="@+id/include"
+        layout="@layout/content_contact_list" />
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom"
+        android:background="@color/white"
+        android:elevation="30dp"
+        >
+
+        <Button
+            android:id="@+id/select_button"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="@string/select_button"
+            style="?android:attr/borderlessButtonStyle"
+            android:textColor="@color/colorAccent"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            />
+
+    </RelativeLayout>
+
+
+</android.support.design.widget.CoordinatorLayout>
+
+
