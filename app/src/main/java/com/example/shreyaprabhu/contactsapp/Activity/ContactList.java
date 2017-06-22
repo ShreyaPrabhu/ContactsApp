@@ -34,6 +34,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.RealmResults;
@@ -128,7 +131,6 @@ public class ContactList extends AppCompatActivity {
                 if (res.isEmpty()) {
 
                     String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-
                     rpcContact.setSelected("false");
                     rpcContact.setContactName(contactName);
                     rpcContact.setContactID(id);
@@ -167,33 +169,16 @@ public class ContactList extends AppCompatActivity {
                             int phoneType = pCursor.getInt(pCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
                             String phoneNo = pCursor.getString(pCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
-                            //LIBPHONENUMBER LIBRARY USAGE
-                            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                            Phonenumber.PhoneNumber phNumberProto = null;
-                            try {
-
-                                // I set the default region to IN (INDIA)
-                                // You can find your country code here http://www.iso.org/iso/country_names_and_code_elements
-                                phNumberProto = phoneUtil.parse(phoneNo, "IN");
-                            } catch (NumberParseException e) {
-                                // if there’s any error
-                                System.err
-                                        .println("NumberParseException was thrown: "
-                                                + e.toString());
-                            }
-                            boolean isValid = phoneUtil.isValidNumber(phNumberProto);
-                            Log.e("valid", isValid + "");
-                            if (isValid) {
-                                assert phNumberProto != null;
-                                PhoneNumberUtil.PhoneNumberType phoneUtilNumberType = phoneUtil.getNumberType(phNumberProto);
-                                Log.e("Lib", phoneUtilNumberType + " ");
-                                if (phoneUtilNumberType.toString().equals("MOBILE")) {
+                           if (isValidPhone(phoneNo)) {
+                                if (phoneType == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
                                     String spacesRemoved = phoneNo.replaceAll("\\s","");
-                                    String properNumber = spacesRemoved.substring(spacesRemoved.length() - 10);
-                                    Log.e("last 10", properNumber);
-                                    set.add(properNumber);
-                                    Log.e("i", properNumber);
-                                    Log.e("phoneType", String.valueOf(phoneType));
+                                    if(isMatch(phoneNo,set))
+                                    {
+                                        set.add(spacesRemoved);
+                                        Log.e("i", spacesRemoved);
+                                        Log.e("phoneType", String.valueOf(phoneType));
+                                    }
+
                                 }
                             }
 
@@ -206,7 +191,6 @@ public class ContactList extends AppCompatActivity {
                             phoneNumTypes.add(phoneNumType1);
                         }
                         realm.commitTransaction();
-                        //contactsAdapter.notifyDataSetChanged();
                         pCursor.close();
                     }
                     rpcContact.setPhoneNumTypes(phoneNumTypes);
@@ -232,58 +216,31 @@ public class ContactList extends AppCompatActivity {
     }
 
 
-    /*
-    class getContactsAsyncTask  extends AsyncTask<String,String,String>
+    public static boolean isValidPhone(String phone)
     {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            //Using realm creates problem for showing dialog box
-            progressDialog = new ProgressDialog(ContactList.this);
-            progressDialog.setMessage("Loading Contacts");
-            progressDialog.setIndeterminate(false);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setCancelable(false);
-            progressDialog.show();
-
-
-        }
-
-        @Override
-        protected String doInBackground(String... strings) {
-
-                    //Realm object cant be accessed from a thread that did not create it
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //Read all the contacts along with mobile numbers from the phone contacts app list
-
-                            try {
-                                readPhoneContacts(context);
-                            } catch (NumberParseException e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                    });
-
-
-
-
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String string){
-
-            progressDialog.dismiss();
-
-        }
+        String expression = "^([0-9\\+]|\\(\\d{1,3}\\))[0-9\\-\\. ]{3,16}$";
+        CharSequence inputString = phone;
+        Pattern pattern = Pattern.compile(expression);
+        Matcher matcher = pattern.matcher(inputString);
+        return matcher.matches();
     }
-    */
+
+    public static boolean isMatch(String phone1, HashSet<String> set){
+        PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+
+        for(String phone2 : set)
+        {
+            Enum matchType = phoneNumberUtil.isNumberMatch(phone1,phone2);
+            Log.e("phone1", phone1);
+            Log.e("phone2", phone2);
+            Log.e("matchtype", matchType.toString());
+            if(matchType.toString().equals("EXACT_MATCH")
+                    || matchType.toString().equals("NSN_MATCH")
+                    || matchType.toString().equals("SHORT_NSN_MATCH"))
+                return false;
+        }
+        return true;
+
+    }
 
 }
